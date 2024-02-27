@@ -4,11 +4,15 @@ import { forwardRef, useEffect, useRef, useImperativeHandle } from 'react'
 import { useResizeObserver } from 'usehooks-ts'
 import type { ComponentProps } from 'react'
 
-type CanvasProps = ComponentProps<'canvas'>
+type MyCanvasProps = {
+  canvasProps?: ComponentProps<'canvas'>
+  onResize?: (ctx: CanvasRenderingContext2D, width: number, height: number) => void
+}
 
 export type MyCanvasRef = { getContext: () => CanvasRenderingContext2D | null }
 
-export default forwardRef<MyCanvasRef, CanvasProps>(function MyCanvas(props, ref) {
+export default forwardRef<MyCanvasRef, MyCanvasProps>(function MyCanvas(props, ref) {
+  const { canvasProps = {}, onResize } = props
   const rootRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -31,22 +35,10 @@ export default forwardRef<MyCanvasRef, CanvasProps>(function MyCanvas(props, ref
       ctx.canvas.height = height
     }
 
-    draw()
-  }, [width, height])
-
-  function draw() {
-    const ctx = getContext()
-
-    if (ctx) {
-      const canvas = ctx.canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.fillStyle = 'salmon'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx.fillStyle = 'white'
-      ctx.font = '50px sans-serif'
-      ctx.fillText('Resize Me!', canvas.width / 2 - 100, canvas.height / 2, 200)
+    if (ctx && onResize) {
+      onResize(ctx, width, height)
     }
-  }
+  }, [width, height])
 
   return (
     <div
@@ -56,7 +48,7 @@ export default forwardRef<MyCanvasRef, CanvasProps>(function MyCanvas(props, ref
         height: '100%',
       }}
     >
-      <canvas ref={canvasRef} {...props} />
+      <canvas ref={canvasRef} {...canvasProps} />
     </div>
   )
 })
