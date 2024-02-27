@@ -22,17 +22,25 @@ export default forwardRef<MyCanvasRef, MyCanvasProps>(function MyCanvas(props, r
   })
 
   const getContext = () => (canvasRef.current ? canvasRef.current.getContext('2d') : null)
+  const getGLContext = () => (canvasRef.current ? canvasRef.current.getContext('webgl') : null)
 
   useImperativeHandle(ref, () => ({
     getContext,
+    getGLContext,
   }))
 
   useEffect(() => {
     const ctx = getContext()
+    const gl = getGLContext()
+    const ratio = window.devicePixelRatio
 
     if (ctx) {
-      ctx.canvas.width = width
-      ctx.canvas.height = height
+      ctx.canvas.width = width * ratio
+      ctx.canvas.height = height * ratio
+    }
+
+    if (gl) {
+      gl.viewport(0, 0, width * ratio, height * ratio)
     }
 
     if (ctx && onResize) {
