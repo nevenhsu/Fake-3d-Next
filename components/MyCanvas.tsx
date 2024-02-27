@@ -1,15 +1,18 @@
 'use client'
 
-import { forwardRef, useEffect, useRef, useImperativeHandle } from 'react'
+import { forwardRef, useEffect, useLayoutEffect, useRef, useImperativeHandle } from 'react'
 import { useResizeObserver } from 'usehooks-ts'
 import type { ComponentProps } from 'react'
 
 type MyCanvasProps = {
   canvasProps?: ComponentProps<'canvas'>
-  onResize?: (ctx: CanvasRenderingContext2D, width: number, height: number) => void
+  onResize?: (width: number, height: number) => void
 }
 
-export type MyCanvasRef = { getContext: () => CanvasRenderingContext2D | null }
+export type MyCanvasRef = {
+  getContext: () => WebGLRenderingContext | null
+  getSize: () => { width: number; height: number }
+}
 
 export default forwardRef<MyCanvasRef, MyCanvasProps>(function MyCanvas(props, ref) {
   const { canvasProps = {}, onResize } = props
@@ -21,30 +24,33 @@ export default forwardRef<MyCanvasRef, MyCanvasProps>(function MyCanvas(props, r
     box: 'border-box',
   })
 
-  const getContext = () => (canvasRef.current ? canvasRef.current.getContext('2d') : null)
-  const getGLContext = () => (canvasRef.current ? canvasRef.current.getContext('webgl') : null)
+  const getContext = () => (canvasRef.current ? canvasRef.current.getContext('webgl') : null)
 
   useImperativeHandle(ref, () => ({
     getContext,
-    getGLContext,
+    getSize: () => ({ width, height }),
   }))
 
   useEffect(() => {
-    const ctx = getContext()
-    const gl = getGLContext()
-    const ratio = window.devicePixelRatio
+    if (!width || !height) return
 
-    if (ctx) {
-      ctx.canvas.width = width * ratio
-      ctx.canvas.height = height * ratio
-    }
+    const gl = getContext()
 
     if (gl) {
+      const ratio = window.devicePixelRatio
+
+      const canvas = gl.canvas as HTMLCanvasElement
+
+      canvas.width = width * ratio
+      canvas.height = height * ratio
+      canvas.style.width = width + 'px'
+      canvas.style.height = height + 'px'
+
       gl.viewport(0, 0, width * ratio, height * ratio)
     }
 
-    if (ctx && onResize) {
-      onResize(ctx, width, height)
+    if (onResize) {
+      onResize(width, height)
     }
   }, [width, height])
 
