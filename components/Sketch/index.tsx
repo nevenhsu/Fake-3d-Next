@@ -102,6 +102,7 @@ export default function Sketch(props: SketchProps) {
       if (!texture) {
         throw new Error('Unable to create texture')
       }
+
       gl.bindTexture(gl.TEXTURE_2D, texture)
 
       // Set the parameters so we can render any size image.
@@ -112,12 +113,12 @@ export default function Sketch(props: SketchProps) {
 
       // Upload the image into the texture.
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, images[i])
-      texturesRef.current.push(texture)
+      texturesRef.current[i] = texture
     }
 
     // lookup the sampler locations.
-    let u_image0Location = gl.getUniformLocation(program, 'image0')
-    let u_image1Location = gl.getUniformLocation(program, 'image1')
+    const u_image0Location = gl.getUniformLocation(program, 'image0')
+    const u_image1Location = gl.getUniformLocation(program, 'image1')
 
     // set which texture units to render with.
     gl.uniform1i(u_image0Location, 0) // texture unit 0
@@ -163,18 +164,17 @@ export default function Sketch(props: SketchProps) {
   })
 
   useLayoutEffect(() => {
-    if (!mountRef.current) {
-      mountRef.current = true
-
-      const gl = canvasRef.current?.getContext()
-      if (!gl) {
-        throw new Error('Unable to get WebGL context')
-      }
-
-      createScene(gl)
-      addTexture()
+    const gl = canvasRef.current?.getContext()
+    if (!gl) {
+      throw new Error('Unable to get WebGL context')
     }
+
+    createScene(gl)
   }, [])
+
+  useLayoutEffect(() => {
+    addTexture()
+  }, [imageUrl])
 
   return (
     <>
