@@ -1,21 +1,11 @@
 .main {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   align-items: center;
+}
+
+.item {
   height: 100vh;
   width: 100vw;
   padding: 2rem;
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.25rem;
-  background-color: #f1356d;
-  color: white;
-  cursor: pointer;
-  position: absolute;
-  right: 2rem;
-  bottom: 2rem;
 }

@@ -14,6 +14,7 @@ type Point = {
 }
 
 type SketchProps = {
+  uid: string
   imageUrl: string
   depthUrl: string
   horizontalThreshold?: number
@@ -21,7 +22,7 @@ type SketchProps = {
 }
 
 export default function Sketch(props: SketchProps) {
-  const { imageUrl, depthUrl, horizontalThreshold = 35, verticalThreshold = 15 } = props
+  const { uid, imageUrl, depthUrl, horizontalThreshold = 35, verticalThreshold = 15 } = props
 
   const mountRef = useRef<boolean>(false)
   const canvasRef = useRef<MyCanvasRef>(null)
@@ -155,7 +156,13 @@ export default function Sketch(props: SketchProps) {
     if (!size) {
       throw new Error('Unable to get canvas size')
     }
+
     const { width, height } = size
+    if (!width || !height) {
+      console.log('no size', uid)
+      return
+    }
+
     let halfX = width / 2
     let halfY = height / 2
 
@@ -164,6 +171,9 @@ export default function Sketch(props: SketchProps) {
   })
 
   useLayoutEffect(() => {
+    if (mountRef.current) return
+
+    mountRef.current = true
     const gl = canvasRef.current?.getContext()
     if (!gl) {
       throw new Error('Unable to get WebGL context')
@@ -180,7 +190,11 @@ export default function Sketch(props: SketchProps) {
     <>
       <MyCanvas
         ref={canvasRef}
-        onResize={(width, height) => {
+        uid={uid}
+        onResize={size => {
+          const { width, height } = size
+          if (!width || !height) return
+
           const imageAspect = imageAspectRef.current
 
           let a1, a2
