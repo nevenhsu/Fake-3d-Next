@@ -1,12 +1,13 @@
 'use client'
 
-import { useRef, useLayoutEffect } from 'react'
-import { useEventListener } from 'usehooks-ts'
+import { useRef, useEffect, useLayoutEffect } from 'react'
+import { useMouse } from '@reactuses/core'
+import { useScroll } from 'framer-motion'
 import MyCanvas, { type MyCanvasRef } from '@/components/MyCanvas'
 import Uniform from '@/lib/webgl/uniform'
 import Rect from '@/lib/webgl/rect'
 import { fragmentShader, vertexShader } from './shades'
-import { loadImages, clamp } from '@/lib/helper'
+import { loadImages } from '@/lib/helper'
 
 type Point = {
   x: number
@@ -24,6 +25,7 @@ type SketchProps = {
 export default function Sketch(props: SketchProps) {
   const { uid, imageUrl, depthUrl, horizontalThreshold = 35, verticalThreshold = 15 } = props
 
+  const ref = useRef(null)
   const mountRef = useRef<boolean>(false)
   const canvasRef = useRef<MyCanvasRef>(null)
   const programRef = useRef<WebGLProgram | null>(null)
@@ -34,6 +36,31 @@ export default function Sketch(props: SketchProps) {
   const pointRef = useRef<Point>({ x: 0, y: 0 })
   const pointTargetRef = useRef<Point>({ x: 0, y: 0 })
   const startTimeRef = useRef<number>(new Date().getTime())
+
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['center end', 'center start'],
+  })
+
+  const getSize = () => {
+    const size = canvasRef.current?.getSize()
+    if (!size) {
+      throw new Error('Unable to get canvas size')
+    }
+    return { width: size.width || 0, height: size.height || 0 }
+  }
+
+  const updatePoint = (p: Point) => {
+    if (!p.x || !p.y) return
+
+    const { width, height } = getSize()
+
+    let halfX = width / 2
+    let halfY = height / 2
+
+    pointTargetRef.current.x = (halfX - p.x) / halfX
+    pointTargetRef.current.y = (halfY - p.y) / halfY
+  }
 
   const addShader = (gl: WebGLRenderingContext, source: string, type: number) => {
     const program = programRef.current
@@ -151,24 +178,7 @@ export default function Sketch(props: SketchProps) {
     requestAnimationFrame(animate)
   }
 
-  useEventListener('mousemove', (e: MouseEvent) => {
-    const size = canvasRef.current?.getSize()
-    if (!size) {
-      throw new Error('Unable to get canvas size')
-    }
-
-    const { width, height } = size
-    if (!width || !height) {
-      console.log('no size', uid)
-      return
-    }
-
-    let halfX = width / 2
-    let halfY = height / 2
-
-    pointTargetRef.current.x = (halfX - e.clientX) / halfX
-    pointTargetRef.current.y = (halfY - e.clientY) / halfY
-  })
+  const mouse = useMouse()
 
   useLayoutEffect(() => {
     if (mountRef.current) return
@@ -182,12 +192,30 @@ export default function Sketch(props: SketchProps) {
     createScene(gl)
   }, [])
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    updatePoint({ x: mouse.clientX, y: mouse.clientY })
+  }, [mouse])
+
+  useEffect(() => {
+    scrollYProgress.on('change', (v: number) => {
+      const { width, height } = getSize()
+
+      const x = width * (1 - v) * 1.5
+      const y = height * v * 1.5
+
+      updatePoint({ x, y })
+    })
+    return () => {
+      scrollYProgress.clearListeners()
+    }
+  }, [scrollYProgress])
+
+  useEffect(() => {
     addTexture()
   }, [imageUrl])
 
   return (
-    <>
+    <div ref={ref} style={{ width: '100%', height: '100%' }}>
       <MyCanvas
         ref={canvasRef}
         uid={uid}
@@ -211,6 +239,6 @@ export default function Sketch(props: SketchProps) {
           uniformsRef.current.uThreshold?.set(horizontalThreshold, verticalThreshold)
         }}
       />
-    </>
+    </div>
   )
 }
