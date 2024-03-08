@@ -1,13 +1,20 @@
 import Sketch from '@/components/Sketch'
 import classes from './page.module.css'
 
-const list = ['ai', 'cloud', 'design', 'dev', 'eth']
+const list = ['eth', 'ai', 'cloud', 'dev', 'design']
 
 export default function Home() {
   return (
-    <main className={classes.main}>
-      {list.map(img => (
-        <div key={img} className={classes.item}>
+    <main className={classes.main} style={{ top: '20vh' }}>
+      {list.map((img, i) => (
+        <div
+          key={img}
+          className={classes.item}
+          style={{
+            zIndex: list.length - i,
+            transform: `translateY(-${30 * i}%)`,
+          }}
+        >
           <Sketch
             key={img}
             uid={img}
