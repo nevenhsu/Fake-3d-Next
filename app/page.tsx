@@ -5,16 +5,9 @@ const list = ['eth', 'ai', 'cloud', 'dev', 'design']
 
 export default function Home() {
   return (
-    <main className={classes.main} style={{ top: '20vh' }}>
+    <main className={classes.main} style={{ top: '10vh' }}>
       {list.map((img, i) => (
-        <div
-          key={img}
-          className={classes.item}
-          style={{
-            zIndex: list.length - i,
-            transform: `translateY(-${30 * i}%)`,
-          }}
-        >
+        <div key={img} className={classes.item}>
           <Sketch
             key={img}
             uid={img}

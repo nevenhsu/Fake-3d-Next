@@ -4,13 +4,15 @@
   flex-direction: column;
   align-items: center;
   overflow: hidden;
+  margin: auto;
+  width: 80vw;
 }
 
 .item {
   position: relative;
   height: 0;
-  width: 100vw;
-  padding-top: 56.25%;
+  width: 100%;
+  padding-top: 56%;
 }
 
 .item > * {
